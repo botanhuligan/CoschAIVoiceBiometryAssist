@@ -133,7 +133,7 @@ class DomainBot:
                 return "Я рад, что смог Вам помочь!"
 
         elif state == States.RECOVER_KEY:
-            result = self._recover_bot.message(text, uid)
+            result = self._recover_bot.message(text, uid, voice_file)
             if result:
                 return result
             else:
