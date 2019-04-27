@@ -3,8 +3,8 @@ import random
 from random import randint
 import os
 
-from src.bot.parser import ParseTypes, Parser
-from src.bot.util import clear_text, read_yaml
+from bot.parser import ParseTypes, Parser
+from bot.util import clear_text, read_yaml
 
 data_path = os.path.dirname(os.path.abspath(__file__)) + "/data/"
 CHECK_WORDS_AMOUNT = 3
