@@ -26,4 +26,4 @@ RUN apt-get -y install portaudio19-dev
 COPY . /app
 WORKDIR /app
 
-RUN pip3 install -r requirements.txt
+RUN pip3 install -r app/requirements.txt
