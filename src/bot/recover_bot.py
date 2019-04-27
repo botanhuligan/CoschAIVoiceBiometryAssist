@@ -3,6 +3,7 @@ from random import randint
 import os
 
 from src.bot.parser import ParseTypes, Parser
+from src.bot.util import clear_text, read_yaml
 
 data_path = os.path.dirname(os.path.abspath(__file__)) + "/data/"
 
@@ -40,7 +41,7 @@ class Session:
         return self._phrase
 
 
-class Bot:
+class RecoverBot:
     """
     Ведёт общение с пользователем
     """
@@ -48,11 +49,20 @@ class Bot:
         self._session = {}
         self._parser = Parser(data_path + "model.yaml")
 
-    def start(self, text, uid):
+    @staticmethod
+    def is_name_in_base(name):
+        base = read_yaml(data_path + "persona.yaml")
+        return name in base
+
+    def start(self, uid, name):
         session = Session()
-        session.set_state(States.INIT)
-        self._session[uid] = session
-        return "Здравствуйте! Что у вас случилось?"
+        if self.is_name_in_base(name):
+            session.set_state(States.READY)
+            session.set_name(name)
+            self._session[uid] = session
+            return "{0}, ты готов восстановить ключ?".format(name)
+        else:
+            return "К сожалению, я не знаю, кто такой {0}. Заведите сначала себе аккаунт.".format(name)
 
     def _set_state(self, uid, state):
         self._session[uid].set_state(state)
@@ -71,23 +81,14 @@ class Bot:
 
     def message(self, text, uid):
         if uid not in self._session:
-            print("NEW MESSAGE FROM UNRECOGNIZED USER {0}".format(uid))
-            return self.start(text, uid)
+            print("HELP_BOT:: MESSAGE FROM UNRECOGNIZED USER {0}".format(uid))
+            return None
 
         session = self._session[uid]
         state = session.get_state()
         print("STATE: {}".format(session.get_state()))
 
-        if state == States.INIT:
-            session.set_state(States.NAME)
-            return "Я с радостью помогу тебе! Представься, пожалуйста."
-
-        elif state == States.NAME:
-            name = self.set_name(text, uid)
-            session.set_state(States.READY)
-            return "И снова здравствуй, {0}! Ты готов восстановить ключ?".format(name)
-
-        elif state == States.READY:
+        if state == States.READY:
             if self.ready(text):
                 phrase = self.generate_phrase()
                 session.set_phrase(phrase)
@@ -105,19 +106,15 @@ class Bot:
             return "Плохо, давай ещё: " + session.get_phrase()
 
         elif state == States.DONE:
+            self.end(uid)
             return "Молодец, красавчик, братуха!"
 
         session.set_state(States.NAME)
-        return "Кажется, Вы потерялись. Начнём сначала? Представься, пожалуйста."
-
-    @staticmethod
-    def _clear_text(text):
-        return [''.join(list(filter(lambda letter: letter.isalpha(), w)))
-                for w in text.lower().split()]
+        return "Кажется, Вы потерялись. Начнём сначала? готовы произнести слово?"
 
     def check_phrase(self, text, phrase):
-        text_words = self._clear_text(text)
-        phrase_words = self._clear_text(phrase)
+        text_words = clear_text(text)
+        phrase_words = clear_text(phrase)
         for word in phrase_words:
             if word not in text_words:
                 return False
@@ -130,9 +127,12 @@ class Bot:
             number = randint(0, len(phrases)-1)
             return phrases[number]
 
+    def end(self, uid):
+        self._session.pop(uid)
+
 
 if __name__ == "__main__":
-    bot = Bot()
+    bot = RecoverBot()
     print(bot.start("", "123"))
     while True:
         print("================")

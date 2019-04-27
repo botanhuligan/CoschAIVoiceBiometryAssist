@@ -1,27 +1,20 @@
 import re
 from enum import Enum
-
-import yaml
+from src.bot.util import read_yaml
 
 
 class ParseTypes(Enum):
     NAME = "NAME"
     READY = "READY"
+    APPROVE = "APPROVE"
+    KEY = "KEY"
+    WRONG_NAME = "WRONG_NAME"
 
 
 class Parser:
 
     def __init__(self, path):
-        self._model = self._read(path)
-
-    @staticmethod
-    def _read(file):
-        with open(file, 'r') as stream:
-            try:
-                return yaml.safe_load(stream)
-            except yaml.YAMLError as exc:
-                print(exc)
-                return None
+        self._model = read_yaml(path)
 
     def _parse(self, text, parse_type):
         if parse_type.value in self._model:

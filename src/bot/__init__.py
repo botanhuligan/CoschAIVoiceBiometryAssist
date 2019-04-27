@@ -1,1 +1,1 @@
-from .bot import Bot
+from .domain_bot import DomainBot

@@ -2,11 +2,11 @@ import uuid
 
 from flask import Flask, render_template, request, make_response
 import traceback
-from .bot import Bot
+from .bot import DomainBot
 
 app = Flask(__name__)
 app.secret_key = "SECRET_KEY"
-bot = Bot()
+bot = DomainBot()
 
 active_users = []
 
@@ -50,7 +50,7 @@ def get_text():
             uid = str(uuid.uuid4())
             add_user(uid)
             is_set_cookie = True
-            answer = bot.start(text, uid)
+            answer = bot.start(uid)
         log_text(uid, text, answer)
 
         args = {"method": "GET"}
