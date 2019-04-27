@@ -1,0 +1,19 @@
+version: '3'
+services:
+  nginx:
+    image: nginx
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+    depends_on:
+      - app
+
+  app:
+      volumes:
+        - ./app:/app
+      ports:
+        - "8080:8080"
+      build:
+        context: app
+        dockerfile: Dockerfile
+      command: gunicorn -b 0.0.0.0:8080 server:app
+

@@ -1,9 +1,9 @@
 import os
 from enum import Enum
 
-from src.bot.new_person_bot import NewPerson
-from src.bot.parser import Parser, ParseTypes
-from src.bot.recover_bot import RecoverBot
+from bot.new_person_bot import NewPerson
+from bot.parser import Parser, ParseTypes
+from bot.recover_bot import RecoverBot
 
 data_path = os.path.dirname(os.path.abspath(__file__)) + "/data/"
 

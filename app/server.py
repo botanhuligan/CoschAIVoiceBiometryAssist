@@ -2,7 +2,7 @@ import uuid
 
 from flask import Flask, render_template, request, make_response
 import traceback
-from .bot import DomainBot
+from bot import DomainBot
 
 app = Flask(__name__)
 app.secret_key = "SECRET_KEY"
@@ -11,7 +11,7 @@ bot = DomainBot()
 active_users = []
 
 
-def log_text(uid, msg, answ):
+def __log_text(uid, msg, answ):
     print("\nUSER:: {0}\nMESSAGE:: {1} \nANSWER:: {2} \n".format(uid, msg, answ))
 
 
@@ -32,6 +32,9 @@ def recognize():
         file = request.files["file"]
         if file:
             print("got file")
+        # file to stt
+        # text to bot
+        # bot text to tts
     except Exception as exception:
         print("EXCEPTION in recognize: ", exception)
         traceback.print_exc()
@@ -51,7 +54,7 @@ def get_text():
             add_user(uid)
             is_set_cookie = True
             answer = bot.start(uid)
-        log_text(uid, text, answer)
+        __log_text(uid, text, answer)
 
         args = {"method": "GET"}
         resp = make_response(render_template("text.html", question=text, answer=answer, args=args))
