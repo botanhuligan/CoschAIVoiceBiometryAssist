@@ -3,9 +3,9 @@ import uuid, os
 from flask import Flask, render_template, request, make_response, \
     Response, send_file, url_for, redirect
 import traceback
-from bot import DomainBot
-from stt.recognizer import AudioRecognizer
-from tts.speaker import make_speak
+from app.bot import DomainBot
+from app.stt.recognizer import AudioRecognizer
+from app.tts.speaker import make_speak
 
 app = Flask(__name__)
 app.secret_key = "SECRET_KEY"
@@ -188,7 +188,7 @@ def handle_get_text():
 # return voice.mp3 and save text info for gui
 @app.route("/voice", methods=["POST"])
 def handle_voice():
-
+    print('HELLO')
     try:
         # get or generate uid
         uid = str(request.cookies.get('userID'))

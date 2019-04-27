@@ -1,5 +1,4 @@
 PyYAML
-PyAudio
 Flask
 gunicorn
 requests
