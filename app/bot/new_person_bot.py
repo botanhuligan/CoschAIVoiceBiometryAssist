@@ -1,8 +1,10 @@
 import os
 from enum import Enum
 import yaml
-from bot.parser import Parser, ParseTypes
-from bot.util import clear_text, read_yaml
+# from bot.parser import Parser, ParseTypes
+# from bot.util import clear_text, read_yaml
+from app.bot.parser import Parser, ParseTypes
+from app.bot.util import clear_text
 
 WORDS_AMOUNT = 5
 data_path = os.path.dirname(os.path.abspath(__file__)) + "/data/"

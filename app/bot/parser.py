@@ -1,6 +1,7 @@
 import re
 from enum import Enum
-from bot.util import read_yaml
+# from bot.util import read_yaml
+from app.bot.util import read_yaml
 
 
 class ParseTypes(Enum):
