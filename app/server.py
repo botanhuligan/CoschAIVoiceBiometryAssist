@@ -72,7 +72,7 @@ def __save_response_and_get_voice(uid:str,
                                   meta:dict={}) -> str:
     voice_file_path = __get_voice(response_to_say)
     response = {
-        "input_phrase":input_phrase, "text_to_show":text_to_show, "meta":meta
+        "input_phrase": input_phrase, "text_to_show": text_to_show, "meta":meta
     }
     WAIT_RESPONCES[uid] = response
     return voice_file_path
@@ -84,6 +84,7 @@ def __get_wait_responce(uid:str)->dict:
         return result
     else:
         return {}
+
 
 # page with api description
 @app.route("/", methods=["POST", "GET"])
@@ -176,7 +177,6 @@ def handle_start():
     response.headers['userID'] = uid
     return response
 
-# get text alwais after voice result
 @app.route("/get_text", methods=["GET"])
 def handle_get_text():
     uid = str(request.cookies.get('userID'))
@@ -200,19 +200,24 @@ def handle_voice():
         try:
             file = request.files["file"]
             __save_wav(file_name, file.read())
-        except Exception as e1:
+        except Exception as exception:
+            print(str(exception))
             file = request.data
             __save_wav(file_name, file)
 
         # send to recognition
         recognition_result = __recognize(file_name)
-        if recognition_result is None:
-            voice_file = __save_response_and_get_voice(uid, '', 'Повторите, Вас плохо слышно', 'Повторите, Вас плохо слышно')
-        else:
-            answer = bot.message(recognition_result, uid)
-            voice_file = __save_response_and_get_voice(uid, recognition_result, answer, answer)
 
-        return send_file(voice_file, as_attachment=True)
+        if recognition_result:
+            # push message to voice bot
+            answer = bot.message(recognition_result, uid, file_name)
+            voice_file = __save_response_and_get_voice(uid, '', answer, answer)
+        else:
+            voice_file = __save_response_and_get_voice(uid, '', 'Повторите, Вас плохо слышно', 'Повторите, Вас плохо слышно')
+
+        send_file(voice_file)
+        return recognition_result
+
     except Exception as e:
         print('Exception in voice answer: '+ str(e))
         return Response(status=500, response = 'Exception in voice handler: '+ str(e))
