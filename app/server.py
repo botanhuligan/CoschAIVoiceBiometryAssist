@@ -3,9 +3,9 @@ import uuid, os
 from flask import Flask, render_template, request, make_response, \
     Response, send_file, url_for, redirect
 import traceback
-from bot import DomainBot
-from stt.recognizer import AudioRecognizer
-from tts.speaker import make_speak
+from .bot import DomainBot
+from .stt.recognizer import AudioRecognizer
+from .tts.speaker import make_speak
 
 app = Flask(__name__)
 app.secret_key = "SECRET_KEY"
@@ -65,7 +65,7 @@ def save_response_and_get_voice(uid:str,
                                 meta:dict={}) -> str:
     voice_file_path = __get_voice(response_to_say)
     response = {
-        "input_phrase":input_phrase, "text_to_show":text_to_show, "meta":meta
+        "input_phrase": input_phrase, "text_to_show": text_to_show, "meta":meta
     }
     WAIT_RESPONCES[uid] = response
     return voice_file_path
@@ -77,6 +77,7 @@ def get_wait_responce(uid:str)->dict:
         return result
     else:
         return {}
+
 
 # page with api description
 @app.route("/", methods=["POST", "GET"])
@@ -108,24 +109,26 @@ def handle_voice():
         try:
             file = request.files["file"]
             __save_wav(file_name, file.read())
-        except Exception as e1:
+        except Exception as exception:
+            print(str(exception))
             file = request.data
             __save_wav(file_name, file)
 
         # send to recognition
         recognition_result = __recognize(file_name)
+
         if recognition_result is None:
-            voice_file = save_response_and_get_voice(uid,'','Повторите, Вас плохо слышно', 'Повторите, Вас плохо слышно')
+            # push message to voice bot
+            answer = bot.message(recognition_result, uid, file_name)
+            voice_file = save_response_and_get_voice(uid, '', answer, answer)
+        else:
+            voice_file = save_response_and_get_voice(uid, '', 'Повторите, Вас плохо слышно', 'Повторите, Вас плохо слышно')
 
-        voice_file = save_response_and_get_voice(uid, '', 'Повторите, Вас плохо слышно', 'Повторите, Вас плохо слышно')
-
-        send_file()
+        send_file(voice_file)
         return recognition_result
     except Exception as e:
-        print('Exception in recognize_google: '+ str(e))
+        print('Exception in recognize_google: ' + str(e))
         return Response(status=500, response = 'Exception in voice handler: '+ str(e))
-
-
 
 
 @app.route("/text", methods=["GET"])

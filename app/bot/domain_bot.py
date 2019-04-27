@@ -1,9 +1,12 @@
 import os
 from enum import Enum
 
-from bot.new_person_bot import NewPerson
-from bot.parser import Parser, ParseTypes
-from bot.recover_bot import RecoverBot
+# from bot.new_person_bot import NewPerson
+# from bot.parser import Parser, ParseTypes
+# from bot.recover_bot import RecoverBot
+from app.bot.new_person_bot import NewPerson
+from app.bot.parser import Parser, ParseTypes
+from app.bot.recover_bot import RecoverBot
 
 data_path = os.path.dirname(os.path.abspath(__file__)) + "/data/"
 
@@ -74,7 +77,7 @@ class DomainBot:
     def ready(self, text):
         return self._parser.parse(text, ParseTypes.READY)
 
-    def message(self, text, uid):
+    def message(self, text, uid, voice_file = None):
         if uid not in self._session:
             print("NEW MESSAGE FROM UNRECOGNIZED USER {0}".format(uid))
             return self.start(uid)

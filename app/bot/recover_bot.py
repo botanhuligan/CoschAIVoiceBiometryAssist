@@ -3,8 +3,11 @@ import random
 from random import randint
 import os
 
-from bot.parser import ParseTypes, Parser
-from bot.util import clear_text, read_yaml
+# from bot.parser import ParseTypes, Parser
+# from bot.util import clear_text, read_yaml
+from app.bot.parser import ParseTypes, Parser
+from app.bot.util import clear_text, read_yaml
+from app.voiceit_verification.voiceit_wrapper import verify_user
 
 data_path = os.path.dirname(os.path.abspath(__file__)) + "/data/"
 CHECK_WORDS_AMOUNT = 3
@@ -81,7 +84,7 @@ class RecoverBot:
     def ready(self, text):
         return self._parser.parse(text, ParseTypes.READY)
 
-    def message(self, text, uid):
+    def message(self, text, uid, voice_file = None):
         if uid not in self._session:
             print("HELP_BOT:: MESSAGE FROM UNRECOGNIZED USER {0}".format(uid))
             return None
@@ -102,10 +105,22 @@ class RecoverBot:
         elif state == States.PHRASE:
             is_phrase = self.check_phrase(text, session.get_phrase())
             if is_phrase:
-                session.set_state(States.CHECK_KEY_WORDS)
-                words = self.get_words(session.get_name())
-                return "Правильно распознанная фраза! А теперь выбери свои ключевые слова: " \
-                       "{0}".format(words)
+
+                # TODO: убрать, когда файлы будут всегда
+                if not voice_file:
+                    words = self.get_words(session.get_name())
+                    session.set_state(States.CHECK_KEY_WORDS)
+                    return "Правильно распознанная фраза! А теперь выбери свои ключевые слова: " \
+                           "{0}".format(words)
+
+                elif verify_user(session.get_name(), voice_file):
+                    session.set_state(States.CHECK_KEY_WORDS)
+                    words = self.get_words(session.get_name())
+                    return "Правильно распознанная фраза! А теперь выбери свои ключевые слова: " \
+                           "{0}".format(words)
+                else:
+                    session.set_state(States.DONE)
+                    return "К сожалению, биометрия не пройдена."
             session.set_state(States.PHRASE)
             return "Плохо, давай ещё: " + session.get_phrase()
         elif state == States.CHECK_KEY_WORDS:
