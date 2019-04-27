@@ -58,11 +58,11 @@ def add_user(uid):
     active_users.append(uid)
     print("USER {0} ADDED".format(uid))
 
-def save_response_and_get_voice(uid:str,
-                                input_phrase,
-                                response_to_say,
-                                text_to_show,
-                                meta:dict={}) -> str:
+def __save_response_and_get_voice(uid:str,
+                                  input_phrase,
+                                  response_to_say,
+                                  text_to_show,
+                                  meta:dict={}) -> str:
     voice_file_path = __get_voice(response_to_say)
     response = {
         "input_phrase":input_phrase, "text_to_show":text_to_show, "meta":meta
@@ -70,7 +70,7 @@ def save_response_and_get_voice(uid:str,
     WAIT_RESPONCES[uid] = response
     return voice_file_path
 
-def get_wait_responce(uid:str)->dict:
+def __get_wait_responce(uid:str)->dict:
     if uid in WAIT_RESPONCES.keys() and WAIT_RESPONCES[uid] is not None:
         result = WAIT_RESPONCES[uid]
         WAIT_RESPONCES[uid] = None
@@ -84,14 +84,28 @@ def index():
     args = {"method": "GET"}
     return render_template("index.html", args=args)
 
+### CREATE USER API ###
+### CREATE USER API END ###
 
+### RESTORE SESSION API ####
+# start of restore session
 @app.route("/start", methods=["POST"])
 def handle_start():
     uid = str(uuid.uuid4())
     add_user(uid)
     is_set_cookie = True
     answer = bot.start(uid)
+    voice_file = __save_response_and_get_voice(uid, '', answer, answer)
+    return send_file(voice_file, as_attachment=True)
 
+# get text after voice result
+@app.route("/get_text", methods=["GET"])
+def handle_get_text():
+    uid = str(request.cookies.get('userID'))
+    if uid is None:
+        return redirect(url_for('start'))
+    text_response = __get_wait_responce(uid)
+    return text_response
 
 # return voice.mp3 and save text info for gui
 @app.route("/voice", methods=["POST"])
@@ -115,17 +129,16 @@ def handle_voice():
         # send to recognition
         recognition_result = __recognize(file_name)
         if recognition_result is None:
-            voice_file = save_response_and_get_voice(uid,'','Повторите, Вас плохо слышно', 'Повторите, Вас плохо слышно')
+            voice_file = __save_response_and_get_voice(uid, '', 'Повторите, Вас плохо слышно', 'Повторите, Вас плохо слышно')
+        else:
+            answer = bot.message(recognition_result, uid)
+            voice_file = __save_response_and_get_voice(uid, recognition_result, answer, answer)
 
-        voice_file = save_response_and_get_voice(uid, '', 'Повторите, Вас плохо слышно', 'Повторите, Вас плохо слышно')
-
-        send_file()
-        return recognition_result
+        return send_file(voice_file, as_attachment=True)
     except Exception as e:
-        print('Exception in recognize_google: '+ str(e))
+        print('Exception in voice answer: '+ str(e))
         return Response(status=500, response = 'Exception in voice handler: '+ str(e))
-
-
+### RESTORE SESSION API END####
 
 
 @app.route("/text", methods=["GET"])
