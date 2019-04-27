@@ -7,7 +7,10 @@ import os
 # from bot.util import clear_text, read_yaml
 from app.bot.parser import ParseTypes, Parser
 from app.bot.util import clear_text, read_yaml
-from app.voiceit_verification.voiceit_wrapper import verify_user
+from app.voiceit_verification.voiceit_wrapper import (
+    verify_user,
+    VerificationStatus
+)
 
 data_path = os.path.dirname(os.path.abspath(__file__)) + "/data/"
 CHECK_WORDS_AMOUNT = 3
@@ -113,7 +116,7 @@ class RecoverBot:
                     return "Правильно распознанная фраза! А теперь выбери свои ключевые слова: " \
                            "{0}".format(words)
 
-                elif verify_user(session.get_name(), voice_file):
+                elif verify_user(session.get_name(), voice_file) == VerificationStatus.SUCC:
                     session.set_state(States.CHECK_KEY_WORDS)
                     words = self.get_words(session.get_name())
                     return "Правильно распознанная фраза! А теперь выбери свои ключевые слова: " \
