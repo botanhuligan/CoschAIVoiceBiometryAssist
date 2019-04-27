@@ -2,3 +2,5 @@ PyYAML
 PyAudio
 Flask
 gunicorn
+requests
+SpeechRecognition==3.8.1
