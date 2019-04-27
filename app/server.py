@@ -1,4 +1,4 @@
-import uuid, os
+import uuid, os, logging
 
 from flask import Flask, render_template, request, make_response, \
     Response, send_file, url_for, redirect
@@ -6,6 +6,15 @@ import traceback
 from app.bot import DomainBot
 from app.stt.recognizer import AudioRecognizer
 from app.tts.speaker import make_speak
+
+main_component = "VBV_SERVER"
+logging.basicConfig(
+    format='%(levelname)s: [%(asctime)s.%(msecs)03d] {} %(name)s '
+           '%(filename)s:%(funcName)s:%(lineno)s:  %(message)s'.format(main_component),
+    datefmt='%Y-%m-%d %H:%M:%S', level="DEBUG")
+
+logger = logging.getLogger("SERVER")
+
 
 app = Flask(__name__)
 app.secret_key = "SECRET_KEY"
@@ -26,23 +35,24 @@ NEW_USERS = {}
 THIS_FILE_PATH = os.path.dirname(os.path.abspath(__file__))
 
 
-def __save_wav(name, file_bytes):
+def __save_wav(name, file_bytes) -> str:
     complete_path = os.path.join(THIS_FILE_PATH + '/wavs/'+ name)
     file1 = open(complete_path, "wb")
     file1.write(file_bytes)
     file1.close()
+    return complete_path
 
 def __recognize(file_name: str) -> str:
     # use the audio file as the audio source
     try:
         recognizer = AudioRecognizer()
         audio = recognizer.get_audio(THIS_FILE_PATH + '/wavs/'+file_name)
-        print('Найден файл: '+str(type(audio)))
+        logger.debug('Найден файл: '+str(type(audio)))
         text = recognizer.recognize_google(audio)
-        print('Текст распознан:' + text)
+        logger.debug('Текст распознан:' + text)
         return text
     except Exception as e:
-        print('Recognizer exception: '+str(e))
+        logger.error('Recognizer exception: '+str(e))
         return None
 
 def __get_voice(text:str) -> str:
@@ -50,7 +60,7 @@ def __get_voice(text:str) -> str:
     file_path = THIS_FILE_PATH + '/audio/' + file_name
     exists = os.path.isfile(file_path)
     if exists:
-        print('Voice already exist')
+        logger.debug('Voice already exist')
     else:
     # Keep presets
         make_speak(text, file_path)
@@ -58,22 +68,24 @@ def __get_voice(text:str) -> str:
 
 
 def __log_text(uid, msg, answ):
-    print("\nUSER:: {0}\nMESSAGE:: {1} \nANSWER:: {2} \n".format(uid, msg, answ))
+    logger.debug("\nUSER:: {0}\nMESSAGE:: {1} \nANSWER:: {2} \n".format(uid, msg, answ))
 
 
 def __add_user_as_active(uid):
     active_users.append(uid)
-    print("USER {0} ADDED".format(uid))
+    logger.debug("USER {0} ADDED".format(uid))
 
 def __save_response_and_get_voice(uid:str,
                                   input_phrase,
                                   response_to_say,
                                   text_to_show,
                                   meta:dict={}) -> str:
+    logger.debug('Get voice: '+str(response_to_say))
     voice_file_path = __get_voice(response_to_say)
     response = {
         "input_phrase": input_phrase, "text_to_show": text_to_show, "meta":meta
     }
+    logger.debug('New text response: '+str(response))
     WAIT_RESPONCES[uid] = response
     return voice_file_path
 
@@ -96,27 +108,31 @@ def index():
 @app.route("/add_user/name", methods=["POST"])
 def add_user_api_name():
     try:
-        name = request.form['name']
-    except Exception as e1:
-        json_content = request.get_json()
-        if json_content is not None:
-            name = json_content.get("name", None)
-        if name is None:
-            name: str = request.args.get('name', default='')
+        try:
+            name = request.form['name']
+        except Exception as e1:
+            json_content = request.get_json()
+            if json_content is not None:
+                name = json_content.get("name", None)
+            if name is None:
+                name: str = request.args.get('name', default='')
 
-    # get or generate uid
-    uid = str(request.cookies.get('userID'))
-    if uid is None:
-        uid = str(uuid.uuid4())
-        __add_user_as_active(uid)
+        # get or generate uid
+        uid = str(request.cookies.get('userID'))
+        if uid is None:
+            uid = str(uuid.uuid4())
+            __add_user_as_active(uid)
 
-    new_user = {}
-    new_user['name'] = name
-    NEW_USERS[uid] = new_user
+        new_user = {}
+        new_user['name'] = name
+        NEW_USERS[uid] = new_user
 
-    response = make_response(('OK', 200))
-    response.headers['userID'] = uid
-    return response
+        response = make_response(('OK', 200))
+        response.headers['userID'] = uid
+        return response
+    except Exception as e:
+        logger.error('Exception when add name: '+str(e))
+        return Response(status=500, response='Exception when add name: ' + str(e))
 
 @app.route("/add_user/words", methods=["POST"])
 def add_user_api_words():
@@ -157,7 +173,7 @@ def add_user_api_voice():
 
         return send_file(voice_file, as_attachment=True)
     except Exception as e:
-        print('Exception in add_user voice_verification: ' + str(e))
+        logger.error('Exception in add_user voice_verification: ' + str(e))
         return Response(status=500, response='Exception in voice handler: ' + str(e))
 
 
@@ -168,14 +184,18 @@ def add_user_api_voice():
 # start of restore session
 @app.route("/start", methods=["POST"])
 def handle_start():
-    uid = str(uuid.uuid4())
-    __add_user_as_active(uid)
-    answer = bot.start(uid)
-    voice_file = __save_response_and_get_voice(uid, '', answer, answer)
+    try:
+        uid = str(uuid.uuid4())
+        __add_user_as_active(uid)
+        answer = bot.start(uid)
+        voice_file = __save_response_and_get_voice(uid, '', answer, answer)
 
-    response = make_response(send_file(voice_file, as_attachment=True))
-    response.headers['userID'] = uid
-    return response
+        response = make_response(send_file(voice_file, as_attachment=True))
+        response.headers['userID'] = uid
+        return response
+    except Exception as e:
+        logger.error('Exception in handle_start: ' + str(e))
+        return Response(status=500, response='Exception in handle_start: ' + str(e))
 
 @app.route("/get_text", methods=["GET"])
 def handle_get_text():
@@ -188,29 +208,37 @@ def handle_get_text():
 # return voice.mp3 and save text info for gui
 @app.route("/voice", methods=["POST"])
 def handle_voice():
-    print('HELLO')
+    logger.debug('Try handle_voice')
     try:
         # get or generate uid
         uid = str(request.cookies.get('userID'))
         if uid is None:
+            logger.debug('Uid is None. Redirect to /start')
             return redirect(url_for('start'))
 
         # save wav file
         file_name = str(uuid.uuid4())+'.wav'
         try:
             file = request.files["file"]
-            __save_wav(file_name, file.read())
+            input_wav_path = __save_wav(file_name, file.read())
         except Exception as exception:
             print(str(exception))
             file = request.data
-            __save_wav(file_name, file)
+            input_wav_path = __save_wav(file_name, file)
+
+        size = os.path.getsize(input_wav_path)
+        if size == 0:
+            logger.error("Wav not created!!!")
+            return Response(status=500, response='Wav not created!')
+        else:
+            print('Wav create ok')
 
         # send to recognition
-        recognition_result = __recognize(file_name)
+        recognition_result = __recognize(input_wav_path)
 
         if recognition_result:
             # push message to voice bot
-            answer = bot.message(recognition_result, uid, file_name)
+            answer = bot.message(recognition_result, uid, input_wav_path)
             voice_file = __save_response_and_get_voice(uid, '', answer, answer)
         else:
             voice_file = __save_response_and_get_voice(uid, '', 'Повторите, Вас плохо слышно', 'Повторите, Вас плохо слышно')
@@ -219,7 +247,7 @@ def handle_voice():
         return recognition_result
 
     except Exception as e:
-        print('Exception in voice answer: '+ str(e))
+        logger.error('Exception in voice answer: '+ str(e))
         return Response(status=500, response = 'Exception in voice handler: '+ str(e))
 ### RESTORE SESSION API END####
 
