@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Recorder</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+          integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="../style.css">
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+            integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+            crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+            integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+            crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+            integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+            crossorigin="anonymous"></script>
+    <script src="https://cdn.rawgit.com/mattdiamond/Recorderjs/08e7abd9/dist/recorder.js"></script>
+    <script src="../js/record.js"></script>
+    <script>
+        function start() {
+            fetch('/back/start', {method: 'GET'})
+                .then(response => response.body())
+                .then(playSound)
+        }
+
+        function onRecordStart() {
+            startRecording();
+            $('#recordButton').hide();
+            $('#stopButton').show();
+        }
+
+        function onRecordedVoiceObtained(blob) {
+            fetch('/back/voice', {method: 'POST', credentials: 'include', body: blob})
+                .then(response => response.body())
+                .then(playSound)
+            fetch('/back/get_text', {method: 'GET', credentials: 'include'})
+                .then(response => response.json())
+                .then(addDialogMessage)
+        }
+
+        function onRecordStop() {
+            $('#recordButton').show();
+            $('#stopButton').hide();
+            stopRecording(onRecordedVoiceObtained);
+        }
+
+        function addDialogMessage(data) {
+            const message = document.createElement('div');
+            message.className = 'message'
+            const input_phrase = document.createElement('div');
+            input_phrase.innerText = data.input_phrase
+            input_phrase.className = 'input-phrase'
+            const text_to_show = document.createElement('div');
+            text_to_show.innerText = data.text_to_show
+            text_to_show.className = 'text-to-show'
+            message.appendChild(input_phrase)
+            message.appendChild(text_to_show)
+            $('#dialog')[0].appendChild(message)
+        }
+
+        function playSound(blob) {
+            let url = URL.createObjectURL(blob);
+            console.log('url of sound to play: ' + url);
+            let sound = document.createElement('audio');
+            sound.src = url;
+            sound.play();
+        }
+    </script>
+</head>
+<body onload="start()">
+<div class="app">
+    <h1>Болталка</h1>
+    <p>Для записи голоса нажимайте на кнопку микрофона</p>
+
+    <button id="recordButton" class="start-audio-recording" onclick="onRecordStart()"></button>
+    <button id="stopButton" class="stop-audio-recording" onclick="onRecordStop()"
+            style="display: none"></button>
+
+    <div id="dialog"></div>
+</div>
+</body>
+</html>

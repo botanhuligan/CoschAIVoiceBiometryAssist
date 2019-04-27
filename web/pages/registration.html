@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Recorder</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+          integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="../style.css">
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+            integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+            crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+            integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+            crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+            integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+            crossorigin="anonymous"></script>
+    <script src="https://cdn.rawgit.com/mattdiamond/Recorderjs/08e7abd9/dist/recorder.js"></script>
+    <script src="../js/record.js"></script>
+    <script src="../js/registration.js"></script>
+</head>
+<body>
+<div class="app">
+    <div class="container">
+        <h1>Ваше имя</h1>
+        <p>Введите ваше ФИО и нажмите Отправить</p>
+        <input class="form-control input"/>
+        <button id="user_name" onclick="sendName()" class="btn button" style="margin-top: 10px">Отправить</button>
+    </div>
+
+    <div class="container">
+        <h1>Запись голоса</h1>
+        <p>Нажмите значок микрофона и произнесите следующюю фразу:</p>
+
+        <button id="recordButton" class="start-audio-recording" onclick="onRecordStart()"></button>
+        <button id="stopButton" class="stop-audio-recording" onclick="onRecordStop()"
+                style="display: none"></button>
+        <p class="text-to-read" style="display: inline; margin-left: 20px">На шишкосушильную фабрику требуется
+            шишкосушильщик для работы на
+            шишкосушильном аппарате</p>
+
+        <div style="margin-top: 10px">
+            <audio id="audio" style="display: none"></audio>
+        </div>
+        <div style="margin-top: 20px">
+            <button id="send" class="btn button" style="display: none">
+                Отправить
+            </button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>Контрольные слова</h1>
+        <div class="form-group">
+            <label for="word1">Контрольное слово 1:</label>
+            <input type="text" class="form-control input" id="word1">
+        </div>
+        <div class="form-group">
+            <label for="word2">Контрольное слово 2:</label>
+            <input type="text" class="form-control input" id="word2">
+        </div>
+        <div class="form-group">
+            <label for="word3">Контрольное слово 3:</label>
+            <input type="text" class="form-control input" id="word3">
+        </div>
+        <div class="form-group">
+            <label for="word4">Контрольное слово 4:</label>
+            <input type="text" class="form-control input" id="word4">
+        </div>
+        <div class="form-group">
+            <label for="word5">Контрольное слово 5:</label>
+            <input type="text" class="form-control input" id="word5">
+        </div>
+        <button id="control_words" onclick="sendControlWords()" class="btn button" style="margin-top: 10px">Отправить</button>
+
+    </div>
+</div>
+<!-- inserting these scripts at the end to be able to use all the elements in the DOM -->
+
+</body>
+</html>
