@@ -1,4 +1,5 @@
 from enum import Enum
+import random
 from random import randint
 import os
 
@@ -6,7 +7,7 @@ from src.bot.parser import ParseTypes, Parser
 from src.bot.util import clear_text, read_yaml
 
 data_path = os.path.dirname(os.path.abspath(__file__)) + "/data/"
-
+CHECK_WORDS_AMOUNT = 3
 
 class States(Enum):
     INIT = "INIT"
@@ -14,6 +15,7 @@ class States(Enum):
     READY = "READY"
     PHRASE = "PHRASE"
     DONE = "DONE"
+    CHECK_KEY_WORDS = "CHECK_KEY_WORDS"
 
 
 class Session:
@@ -100,11 +102,19 @@ class RecoverBot:
         elif state == States.PHRASE:
             is_phrase = self.check_phrase(text, session.get_phrase())
             if is_phrase:
-                session.set_state(States.DONE)
-                return "Правильно распознанная фраза"
-            session.set_state(uid, States.PHRASE)
+                session.set_state(States.CHECK_KEY_WORDS)
+                words = self.get_words(session.get_name())
+                return "Правильно распознанная фраза! А теперь выбери свои ключевые слова: " \
+                       "{0}".format(words)
+            session.set_state(States.PHRASE)
             return "Плохо, давай ещё: " + session.get_phrase()
-
+        elif state == States.CHECK_KEY_WORDS:
+            if self.check_key_words(text, session.get_name()):
+                session.set_state(States.DONE)
+                return "Отлично, вы сохраняли: {0}".format(self.get_saved(session.get_name()))
+            else:
+                session.set_state(States.DONE)
+                return "Увы, но слова найдены неверно. В доступе отказано."
         elif state == States.DONE:
             self.end(uid)
             return "Молодец, красавчик, братуха!"
@@ -130,12 +140,54 @@ class RecoverBot:
     def end(self, uid):
         self._session.pop(uid)
 
+    def key_words(self, name):
+        base = read_yaml(data_path + "persona.yaml")
+        return base[name]
+
+    def check_key_words(self, text, name):
+        tokens = clear_text(text)
+        kw = self.key_words(name)
+        for token in tokens:
+            if token not in kw:
+                return False
+        return True
+
+    def get_words(self, name):
+        words = []
+        key_words = self.key_words(name)
+        key_pos = random.sample(range(0, len(key_words) - 1), CHECK_WORDS_AMOUNT)
+        pos_in_phrase = random.sample(range(0, 20), CHECK_WORDS_AMOUNT)
+        with open(data_path + "word.txt", "r") as file:
+            text = clear_text(file.read().replace("\n", " "))
+            text = [word for word in text if len(word) > 3]
+        words_pos = random.sample(range(0, len(text)-1), 20-CHECK_WORDS_AMOUNT)
+
+        key = 0
+        other = 0
+
+        for ind, pos in enumerate(words_pos):
+            if ind in pos_in_phrase:
+                words.append(key_words[key_pos[key]])
+                print(key_words[key_pos[key]])
+                key += 1
+            else:
+                words.append(text[words_pos[other]])
+                other += 1
+        return words
+
+    def get_saved(self, name):
+        base = read_yaml(data_path + "saved.yaml")
+        return base[name] if name in base else None
+
 
 if __name__ == "__main__":
     bot = RecoverBot()
-    print(bot.start("", "123"))
+    print(bot.start("123", "виталий"))
     while True:
         print("================")
         text = input("INPUT::")
-        print("OUTPUT:: " + bot.message(text, "123"))
+        answ = bot.message(text, "123")
+        if not answ:
+            break
+        print("OUTPUT:: " + str(answ))
 

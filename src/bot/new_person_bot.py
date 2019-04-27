@@ -1,5 +1,6 @@
 import os
 from enum import Enum
+import yaml
 from src.bot.parser import Parser, ParseTypes
 from src.bot.util import clear_text, read_yaml
 
@@ -35,6 +36,7 @@ class Session:
 class Status(Enum):
     WAITING_WORDS = "WAITING_WORDS"
     WAITING_FOR_APPROVE = "WAITING_FOR_APPROVE"
+    SAVE = "SAVE"
 
 
 class NewPerson:
@@ -43,6 +45,7 @@ class NewPerson:
         self._session = {}
         self._parser = Parser(data_path + "model.yaml")
         self._person_path = data_path + "persona.yaml"
+        self._secret_path = data_path + "saved.yaml"
 
     def start(self, uid, name):
         self._session[uid] = Session()
@@ -75,10 +78,15 @@ class NewPerson:
             approved = self._parser.parse(text, ParseTypes.APPROVE)
             if approved:
                 self.save(session.get_name(), session.get_words())
-                self.end(uid)
-                return "Добавил!"
+                session.set_status(Status.SAVE)
+                return "Добавил! А теперь скажите, что сохранить?"
             self.end(uid)
             return "Хорошо, отменяю сохранение ключевых слов. Обращайся, если понадоблюсь!"
+
+        elif session.get_status() == Status.SAVE:
+            self.save_secret(session.get_name(), text)
+            self.end(uid)
+            return "Сохранено"
 
         return "Не совсем понял, как мы тут оказались"
 
@@ -99,6 +107,20 @@ class NewPerson:
             print(exc)
             return None
 
+    def save_secret(self, name, phrase):
+        person = read_yaml(self._secret_path)
+
+        if not person:
+            person = {}
+        person[name] = phrase
+
+        try:
+            with open(self._secret_path, 'w') as stream:
+                yaml.safe_dump(person, stream)
+        except yaml.YAMLError as exc:
+            print(exc)
+            return None
+
     @staticmethod
     def is_repeatable(lst):
         for ind, word in enumerate(lst):
@@ -114,4 +136,7 @@ if __name__ == "__main__":
     while True:
         print("================")
         text = input("INPUT::")
-        print("OUTPUT:: " + bot.message(text, "123"))
+        answ = bot.message(text, "123")
+        if not answ:
+            break
+        print("OUTPUT:: " + str(answ))
