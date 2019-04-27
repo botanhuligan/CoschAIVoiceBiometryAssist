@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request
+import traceback
 
 app = Flask(__name__)
 
@@ -13,9 +14,20 @@ def index():
 def recognize_google():
     try:
         file = request.files["file"]
-    except Exception as e1:
-        pass
+        if file:
+            print("got file")
+    except Exception as exception:
+        print("EXCEPTION: ", exception)
+        traceback.print_exc()
 
+
+@app.route("/text", methods=["GET"])
+def get_text():
+    text = request.args.get("text")
+    answer = "ответ"
+    args = {"method": "GET"}
+    
+    return render_template("text.html", question=text, answer=answer, args=args)
 
 # @app.route("/download_results", methods=["GET"])
 # def download_results ():
