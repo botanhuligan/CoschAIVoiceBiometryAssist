@@ -1,7 +1,7 @@
 import enum
 import os
 from voiceit2 import VoiceIt2
-from config import *
+from voiceit_verification.config import *
 
 app = VoiceIt2(KEY, TOKEN)
 path = os.path.join(os.path.dirname(os.path.abspath(__file__)))
