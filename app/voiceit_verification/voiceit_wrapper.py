@@ -37,9 +37,10 @@ def verify_user(user_name: str, file: str) -> VerificationStatus:
     """
     user_id = get_user_id(user_name)
     assert user_id
-    return parse_verification_response(
-        app.voice_verification(user_id, LANG, VERIFICATION_PHRASE, file)
-    )
+    response = app.voice_verification(user_id, LANG, VERIFICATION_PHRASE, file)
+    if parse_verification_response(response) != VerificationStatus.SUCC:
+        print(response.get("message"))
+    return parse_verification_response(response)
 
 
 def add_voice_snapshot(user_name: str, *files: str):
@@ -53,7 +54,9 @@ def add_voice_snapshot(user_name: str, *files: str):
     user_id = get_user_id(user_name)
     assert user_id
     for file in files:
-        app.create_voice_enrollment(user_id, LANG, VERIFICATION_PHRASE, file)
+        response = app.create_voice_enrollment(user_id, LANG, VERIFICATION_PHRASE, file)
+        if response['responseCode'] != "SUCC":
+            raise Exception(response["message"])
 
 
 def add_new_user(user_name: str):
@@ -72,6 +75,7 @@ def add_new_user(user_name: str):
         user_id = response['userId']
         with open(path + "/users.yaml", "a") as f:
             f.write("%s: %s" % (user_name, user_id))
+            return response
     except KeyError:
         print("Не удалось создать пользователя")
 
@@ -109,18 +113,3 @@ def get_user_id(user_name: str) -> Optional[str]:
 
 def audio(name: str, ext="wav"):
     return path + "/audio/%s.%s" % (name, ext)
-
-
-if __name__ == "__main__":
-    delete_user("sasha")
-    add_new_user("sasha")
-
-    _dir = "/Users/einstalek/app_server/voiceit_verification/audio/"
-    add_voice_snapshot("sasha",
-                       _dir + "sasha.1.wav",
-                       _dir + "sasha.2.wav",
-                       _dir + "sasha.3.wav")
-
-    print(
-        verify_user("sasha", _dir + "sasha.test.wav")
-    )
