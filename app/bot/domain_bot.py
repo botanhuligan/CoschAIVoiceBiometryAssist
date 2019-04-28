@@ -5,11 +5,14 @@ from app.bot.new_person_bot import NewPerson
 from app.bot.parser import Parser, ParseTypes
 from app.bot.recover_bot import RecoverBot
 # from app.voiceit_verification.voiceit_wrapper import add_new_user as add_new_user_voice_bio, add_voice_snapshot
+from app.bot.util import random_from_list
 from app.gmm_verification.gmm_model import add_voice_snapshot
 
 data_path = os.path.dirname(os.path.abspath(__file__)) + "/data/"
 
 logger = logging.getLogger("DOMAIN_BOT")
+
+TRUE_NEXT_STATE = None
 
 class States(Enum):
     INIT = "INIT"
@@ -20,6 +23,9 @@ class States(Enum):
     NEW_PERSON = "NEW_PERSON"
     RECOVER_KEY = "RECOVER_KEY"
     WRONG_NAME = "WRONG_NAME"
+
+    BOLTALKA = "BOLTALKA"
+    END_BOLTALKA = "END_BOLTALKA"
 
 
 class Session:
@@ -62,7 +68,9 @@ class DomainBot:
         session = Session()
         session.set_state(States.INIT)
         self._session[uid] = session
-        return "Здравствуйте! Представьтесь, пожалуйста!"
+        return random_from_list(["Здравствуйте!", 'Привет'])+ "Здесь я могу вернуть Ваш секрет, " \
+               "если Вы пройдете голосовую и диалоговую биометрию." + \
+               random_from_list(["Назовите имя и фамилия?", 'Скажите Ваше имя и фaмилию'])
 
     def _set_state(self, uid, state):
         self._session[uid].set_state(state)
@@ -95,6 +103,8 @@ class DomainBot:
         return self._parser.parse(text, ParseTypes.READY)
 
     def message(self, text, uid, voice_file = None):
+        global TRUE_NEXT_STATE
+
         if uid not in self._session:
             logger.debug("NEW MESSAGE FROM UNRECOGNIZED USER {0}".format(uid))
             return self.start(uid)
@@ -104,14 +114,15 @@ class DomainBot:
         print("STATE: {}".format(session.get_state()))
 
         if state == States.DONE:
-            session.set_state(States.EXIT_DONE)
-            return "Я могу Вам ещё чем-то помочь?"
+            TRUE_NEXT_STATE = States.EXIT_DONE
+            session.set_state(States.BOLTALKA)
+            return random_from_list(["Пока-пока!", 'До свидания!'])
 
         elif state == States.EXIT_DONE:
             approve = self._parser.parse(text, ParseTypes.APPROVE)
             if approve:
                 session.set_state(States.PROBLEM)
-                return "Чем я могу помочь, {0}?".format(session.get_name())
+                return random_from_list(["Что случилось?", 'Чем я могу помочь?'])
             else:
                 session.set_state(States.DONE)
                 return "Хорошо."
@@ -119,35 +130,38 @@ class DomainBot:
         elif state == States.INIT:
             name = self.set_name(text, uid)
             session.set_state(States.PROBLEM)
-            return "Хорошо! Что у вас случилось?"
+            return random_from_list(["Что случилось?", 'Чем я могу помочь?'])
 
         elif state == States.PROBLEM:
             is_name = self._parser.parse(text, ParseTypes.WRONG_NAME)
             if is_name:
                 session.set_state(States.INIT)
-                return "Хорошо, уточните, как Вас зовут?"
+                return random_from_list(["Чтобы начать, скажите Вашу фамилию и имя",
+                                         'Назовите пожалуйста фамилию и имя'])
+            # start rocover
             key = self._parser.parse(text, ParseTypes.KEY)
             if key:
                 session.set_state(States.RECOVER_KEY)
 
                 return self._recover_bot.start(uid, session.get_name())
 
-            session.set_state(States.IS_NEW)
-            return "Вы хотите завести нового пользователя?"
+            # длбавление пользователя происходит в вебе
+            # session.set_state(States.IS_NEW)
+            # return "Вы хотите завести нового пользователя?"
 
-        elif state == States.IS_NEW:
-            approve = self._parser.parse(text, ParseTypes.APPROVE)
-            if approve:
-                session.set_state(States.NEW_PERSON)
-                return self._new_person.start(uid, session.get_name())
-
-        elif state == States.NEW_PERSON:
-            result = self._new_person.message(text, uid)
-            if result:
-                return result
-            else:
-                session.set_state(States.DONE)
-                return "Я рад, что смог Вам помочь!"
+        # elif state == States.IS_NEW:
+        #     approve = self._parser.parse(text, ParseTypes.APPROVE)
+        #     if approve:
+        #         session.set_state(States.NEW_PERSON)
+        #         return self._new_person.start(uid, session.get_name())
+        #
+        # elif state == States.NEW_PERSON:
+        #     result = self._new_person.message(text, uid)
+        #     if result:
+        #         return result
+        #     else:
+        #         session.set_state(States.DONE)
+        #         return "Я рад, что смог Вам помочь!"
 
         elif state == States.RECOVER_KEY:
             result = self._recover_bot.message(text, uid, voice_file)
@@ -155,7 +169,8 @@ class DomainBot:
                 return result
             else:
                 session.set_state(States.DONE)
-                return "Я рад, что смог Вам помочь!"
+                return random_from_list(["Желаю удачи в восстановлении!", 'Всега рада помочь']) +\
+                       ". Для расшифрования вашего секрета перейдите на страницу http://0.0.0.0:8081/pages/smart-get.html"
 
         name = session.get_name()
         if name:
@@ -163,8 +178,24 @@ class DomainBot:
 
             return "Что случилось?"
 
-        session.set_state(States.INIT)
-        return "Уточните, пожалуйста, как Вас зовут."
+            session.set_state(States.INIT)
+            return random_from_list(["Я вас не поняла!", 'Пожалуйста, повторите'])
+
+        # not main logic dialog boltalka
+        elif state == States.BOLTALKA:
+            session.set_state(States.END_BOLTALKA)
+            return random_from_list(["Давай вечером сходим в бар?",
+                                     'Какие автомобили ты любишь?',
+                                     'Какие планы на выходные?',
+                                     'Ты любишь собак или кошек?']
+                                    )
+        elif state == States.END_BOLTALKA:
+            session.set_state(TRUE_NEXT_STATE)
+            return random_from_list(["Ура",
+                                     'Это хорошо!',
+                                     'А мы похожи',
+                                     'Я запомнил']
+                                    )
 
 
 if __name__ == "__main__":

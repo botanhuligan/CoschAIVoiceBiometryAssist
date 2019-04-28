@@ -12,3 +12,10 @@ def read_yaml(file):
         except yaml.YAMLError as exc:
             print(exc)
             return None
+
+
+# функция возвращает произвольную фразу из списка - для более живого общения :)
+def random_from_list(list_: list) -> str:
+    import random
+    secure_random = random.SystemRandom()
+    return secure_random.choice(list_)
