@@ -79,7 +79,7 @@ class DomainBot:
 
     def set_name(self, text, uid):
         session = self._session[uid]
-        extracted_name = self._parser.extract_name(text)
+        extracted_name = text  # self._parser.extract_name(text)
         if extracted_name:
             name = extracted_name
         else:
@@ -92,7 +92,6 @@ class DomainBot:
     def add_new_user(self, uid, name, words, voice_file_path):
         try:
             # create voice snapshot
-            # add_new_user_voice_bio(name)
             add_voice_snapshot(name, voice_file_path)
             # save new person secret
             self._new_person.start(uid, name)

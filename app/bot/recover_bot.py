@@ -1,3 +1,4 @@
+import logging
 from enum import Enum
 import random
 from random import randint
@@ -8,13 +9,11 @@ import os
 from app.bot.parser import ParseTypes, Parser
 from app.bot.util import clear_text, read_yaml
 from app.gmm_verification.gmm_model import VerificationStatus, verify_user
-# from app.voiceit_verification.voiceit_wrapper import (
-#     verify_user,
-#     VerificationStatus
-# )
 
 data_path = os.path.dirname(os.path.abspath(__file__)) + "/data/"
 CHECK_WORDS_AMOUNT = 3
+
+logger = logging.getLogger("RECOVER_BOT")
 
 
 class States(Enum):
@@ -198,6 +197,7 @@ class RecoverBot:
         return words
 
     def get_saved(self, name):
+        logger.debug('recover user: ' + name)
         base = read_yaml(data_path + "saved.yaml")
         return base[name] if name in base else None
 

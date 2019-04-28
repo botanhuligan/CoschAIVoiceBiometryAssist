@@ -1,6 +1,9 @@
 import yaml
+import re
 
 def clear_text(text):
+    text = text.replace('ё','е')
+    text = " ".join([w for w in re.split("\W", text) if w])
     return [''.join(list(filter(lambda letter: letter.isalpha(), w)))
             for w in text.lower().split()]
 
