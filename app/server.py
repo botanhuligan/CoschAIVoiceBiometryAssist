@@ -1,7 +1,7 @@
 import uuid, os, logging
 
 from flask import Flask, render_template, request, make_response, \
-    Response, send_file, url_for, redirect
+    Response, send_file, url_for, redirect, jsonify
 import traceback
 from app.bot import DomainBot
 from app.stt.recognizer import AudioRecognizer
@@ -183,7 +183,7 @@ def add_user_api_voice():
 
 ### RESTORE SESSION API ####
 # start of restore session
-@app.route("/start", methods=["POST"])
+@app.route("/start", methods=["GET"])
 def handle_start():
     try:
         uid = str(uuid.uuid4())
@@ -192,19 +192,20 @@ def handle_start():
         voice_file = __save_response_and_get_voice(uid, '', answer, answer)
 
         response = make_response(send_file(voice_file, as_attachment=True))
-        response.headers['userID'] = uid
+        response.headers['Set-Cookie'] = 'userID='+uid
         return response
     except Exception as e:
         logger.error('Exception in handle_start: ' + str(e))
         return Response(status=500, response='Exception in handle_start: ' + str(e))
 
-@app.route("/get_text", methods=["GET"])
+@app.route("/get_dialog", methods=["GET"])
 def handle_get_text():
     uid = request.cookies.get('userID')
     if uid is None:
         return redirect(url_for('start'))
     text_response = __get_wait_responce(uid)
-    return text_response
+    return jsonify(text_response)
+
 
 # return voice.mp3 and save text info for gui
 @app.route("/voice", methods=["POST"])
@@ -240,7 +241,7 @@ def handle_voice():
         if recognition_result:
             # push message to voice bot
             answer = bot.message(recognition_result, uid, input_wav_path)
-            voice_file = __save_response_and_get_voice(uid, '', answer, answer)
+            voice_file = __save_response_and_get_voice(uid, recognition_result, answer, answer)
         else:
             voice_file = __save_response_and_get_voice(uid, '', 'Повторите, Вас плохо слышно', 'Повторите, Вас плохо слышно')
 
