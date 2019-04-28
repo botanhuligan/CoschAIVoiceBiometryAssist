@@ -5,7 +5,7 @@ from typing import Optional
 from voiceit2 import VoiceIt2
 import yaml
 
-from app.voiceit_verification.config import
+from app.voiceit_verification.config import LANG, VERIFICATION_PHRASE, KEY, TOKEN
 
 app = VoiceIt2(KEY, TOKEN)
 path = os.path.join(os.path.dirname(os.path.abspath(__file__)))
