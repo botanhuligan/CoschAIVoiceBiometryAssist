@@ -4,3 +4,4 @@ gunicorn
 requests
 SpeechRecognition==3.8.1
 voiceit2
+pymorphy2
