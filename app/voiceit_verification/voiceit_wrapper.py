@@ -5,7 +5,7 @@ from typing import Optional
 from voiceit2 import VoiceIt2
 import yaml
 
-from app.voiceit_verification.config import *
+from app.voiceit_verification.config import
 
 app = VoiceIt2(KEY, TOKEN)
 path = os.path.join(os.path.dirname(os.path.abspath(__file__)))
@@ -35,6 +35,9 @@ def verify_user(user_name: str, file: str) -> VerificationStatus:
     :param file: путь к файлу с записью голоса для верификации
     :return:
     """
+    # TODO: ubrat kak Sasha dobavit svoi
+    return True
+
     user_id = get_user_id(user_name)
     assert user_id
     response = app.voice_verification(user_id, LANG, VERIFICATION_PHRASE, file)
