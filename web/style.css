@@ -1,0 +1,107 @@
+html {
+    width: 100%;
+    height: 100%;
+}
+
+body {
+    width: 100%;
+    height: 100%;
+}
+
+.app {
+    padding: 20px;
+    background-color: rgb(43, 43, 43);
+    width: 100%;
+    height: 100%;
+    color: rgb(186, 186, 164);
+}
+
+.container {
+    margin-bottom: 40px !important;
+}
+
+.content {
+    padding: 15px;
+}
+
+.form {
+    width: 300px;
+}
+
+.input {
+    width: 500px;
+    border-color: rgb(232, 191, 106);
+    background-color: rgb(60, 63, 65);
+}
+
+.button {
+    color: rgb(216, 216, 216);
+    border-color: rgb(232, 191, 106);
+    background-color: rgb(232, 191, 106);
+}
+
+.button:hover {
+    border-color: rgb(204, 120, 50);
+    background-color: rgb(204, 120, 50);
+}
+
+.hash-button {
+    color: aliceblue;
+}
+
+.hash-button:hover {
+    color: rgb(232, 191, 106);
+}
+
+.text-to-read {
+    color: rgb(255, 255, 255);
+    font-size: 20px;
+}
+
+.message {
+    margin-bottom: 10px
+}
+
+.input-phrase {
+    color: rgb(232, 191, 106);
+}
+
+.text-to-show {
+    color: rgb(204, 120, 50);
+}
+
+.start-audio-recording {
+    border: 8px solid white;
+    -webkit-border-radius: 17px;
+    -moz-border-radius: 17px;
+    border-radius: 17px;
+    width: 34px;
+    height: 34px;
+    background-color: red;
+}
+
+.stop-audio-recording {
+    margin: 4px;
+    width: 24px;
+    height: 24px;
+    background-color: red;
+}
+
+.button-disabled {
+
+}
+
+.App-header {
+    background-color: #282c34;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(10px + 2vmin);
+    color: white;
+}
+
+.App-link {
+    color: #61dafb;
+}

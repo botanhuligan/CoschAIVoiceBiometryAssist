@@ -1,0 +1,11 @@
+PyYAML
+Flask
+gunicorn
+requests
+SpeechRecognition==3.8.1
+# voiceit2
+python_speech_features
+sklearn
+numpy
+scipy
+pymorphy2
