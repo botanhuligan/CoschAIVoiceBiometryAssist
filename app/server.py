@@ -35,7 +35,7 @@ NEW_USERS = {}
 THIS_FILE_PATH = os.path.dirname(os.path.abspath(__file__))
 
 
-def __save_wav(name, file_bytes) -> str:
+def __save_input_wav(name, file_bytes) -> str:
     complete_path = os.path.join(THIS_FILE_PATH + '/wavs/'+ name)
     file1 = open(complete_path, "wb")
     file1.write(file_bytes)
@@ -55,6 +55,7 @@ def __recognize(file_name: str) -> str:
         logger.error('Recognizer exception: '+str(e))
         return None
 
+# return path of new voice
 def __get_voice(text:str) -> str:
     file_name = str(text).lower().strip() + '.mp3'
     # file_name = file_name.replace('.', '')
@@ -127,9 +128,10 @@ def add_user_api_name():
         new_user = {}
         new_user['name'] = name
         NEW_USERS[uid] = new_user
+        logger.debug("Creat new user object for registration")
 
         response = make_response(('OK', 200))
-        response.headers['userID'] = uid
+        response.headers['Set-Cookie'] = 'userID='+uid
         return response
     except Exception as e:
         logger.error('Exception when add name: '+str(e))
@@ -138,46 +140,89 @@ def add_user_api_name():
 @app.route("/add_user/words", methods=["POST"])
 def add_user_api_words():
     try:
-        words = request.form['words']
-    except Exception as e1:
-        json_content = request.get_json()
-        if json_content is not None:
-            words = json_content.get("words", None)
-        if words is None:
-            words: str = request.args.get('words', default='')
+        try:
+            words = request.form['words']
+        except Exception as e1:
+            json_content = request.get_json()
+            if json_content is not None:
+                words = json_content.get("words", None)
+            if words is None:
+                words: str = request.args.get('words', default='')
+
+        # get or generate uid
+        uid = request.cookies.get('userID')
+        if uid is None:
+            return Response(status=500, response='No userID in cookie')
+
+        if uid in NEW_USERS.keys():
+            NEW_USERS[uid]['words'] = words
+        else:
+            return Response(status=500, response='No userID in memory')
+
+        logger.debug("Add words for registration OK: "+str(NEW_USERS[uid]))
+
+        response = make_response(('OK', 200))
+        response.headers['Set-Cookie'] = 'userID=' + uid
+        return response
+    except Exception as e:
+        logger.error('Exception when add words: ' + str(e))
+        return Response(status=500, response='Exception when add words: ' + str(e))
 
 
 @app.route("/add_user/voice", methods=["POST"])
 def add_user_api_voice():
     try:
         # get or generate uid
-        uid = str(request.cookies.get('userID'))
+        uid = request.cookies.get('userID')
         if uid is None:
-            return redirect(url_for('start'))
+            return Response(status=500, response='No userID in cookie')
         # save wav file
         file_name = str(uuid.uuid4()) + '.wav'
         try:
             file = request.files["file"]
-            __save_wav(file_name, file.read())
+            input_wav_path = __save_input_wav(file_name, file.read())
         except Exception as e1:
             file = request.data
-            __save_wav(file_name, file)
+            input_wav_path = __save_input_wav(file_name, file)
+
+        size = os.path.getsize(input_wav_path)
+        if size == 0:
+            logger.error("Wav not created!!!")
+            return Response(status=500, response='Wav not created!')
+        else:
+            logger.debug('Wav create ok')
+
+        # get or generate uid
+        uid = request.cookies.get('userID')
+        if uid is None:
+            return Response(status=500, response='No userID in cookie')
+
+        if uid in NEW_USERS.keys():
+            NEW_USERS[uid]['file_path'] = input_wav_path
+        else:
+            return Response(status=500, response='No userID in memory')
 
         # send to recognition
         recognition_result = __recognize(file_name)
-        if recognition_result is None:
-            voice_file = __save_response_and_get_voice(uid, '', 'Повторите, Вас плохо слышно',
-                                                       'Повторите, Вас плохо слышно')
-        else:
-            answer = bot.message(recognition_result, uid)
-            voice_file = __save_response_and_get_voice(uid, recognition_result, answer, answer)
 
-        return send_file(voice_file, as_attachment=True)
+        if recognition_result:
+            # save user and push message to voice bot
+            user = NEW_USERS[uid]
+            logger.debug('Try to add new user: '+str(user))
+            gen_secret = bot.add_new_user(uid, user['name'], user['words'], user['file_path'])
+            if gen_secret!='':
+                text_response = {"gen_secret":gen_secret}
+                return jsonify(text_response)
+
+        voice_file = __save_response_and_get_voice(uid, '', 'Повторите, Вас плохо слышно',
+                                                   'Повторите, Вас плохо слышно')
+        response = make_response(send_file(voice_file, as_attachment=True))
+        response.headers['userID'] = uid
+        return response
+
     except Exception as e:
         logger.error('Exception in add_user voice_verification: ' + str(e))
         return Response(status=500, response='Exception in voice handler: ' + str(e))
-
-
 ### CREATE USER API END ###
 
 
@@ -222,18 +267,18 @@ def handle_voice():
         file_name = str(uuid.uuid4())+'.wav'
         try:
             file = request.files["file"]
-            input_wav_path = __save_wav(file_name, file.read())
+            input_wav_path = __save_input_wav(file_name, file.read())
         except Exception as exception:
             print(str(exception))
             file = request.data
-            input_wav_path = __save_wav(file_name, file)
+            input_wav_path = __save_input_wav(file_name, file)
 
         size = os.path.getsize(input_wav_path)
         if size == 0:
             logger.error("Wav not created!!!")
             return Response(status=500, response='Wav not created!')
         else:
-            print('Wav create ok')
+            logger.debug('Wav create ok')
 
         # send to recognition
         recognition_result = __recognize(input_wav_path)

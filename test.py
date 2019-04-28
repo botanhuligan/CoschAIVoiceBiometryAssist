@@ -1,4 +1,4 @@
-from tts.speaker import make_speak
+from app.tts.speaker import make_speak
 import os
 THIS_FILE_PATH = os.path.dirname(os.path.abspath(__file__))
 

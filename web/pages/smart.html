@@ -17,6 +17,8 @@
             integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
             crossorigin="anonymous"></script>
     <script src="https://cdn.rawgit.com/mattdiamond/Recorderjs/08e7abd9/dist/recorder.js"></script>
+    <script type="text/javascript" src="path-to/bower_components/crypto-js/crypto-js.js"></script>
+    <script type="text/javascript" src="../js/smart.js"></script>
 </head>
 <body>
 <div class="app">
@@ -24,20 +26,33 @@
         <h1>Сохранение ключа в зашифрованном виде в блокчейне</h1>
         <div class="form-group">
             <label for="system_code">System code</label>
-            <input type="text" class="form-control input" id="system_code">
-            <button class="btn button">hash</button>
+            <div class="input-group">
+                <input type="text" class="form-control input" id="system_code">
+                <span class="input-group-btn">
+                    <button class="btn hash-button" onclick="hashSystemCode()">hash</button>
+                </span>
+            </div>
         </div>
         <div class="form-group">
             <label for="user_code">Код</label>
-            <input type="text" class="form-control input" id="user_code">
-            <button class="btn button">hash</button>
+            <div class="input-group">
+                <input type="text" class="form-control input" id="user_code">
+                <span class="input-group-btn">
+                    <button class="btn hash-button">hash</button>
+                </span>
+            </div>
         </div>
         <div class="form-group">
             <label for="pk">Приватный ключ</label>
-            <input type="text" class="form-control input" id="pk">
-            <button class="btn button">hash</button>
+            <div class="input-group">
+                <input type="text" class="form-control input" id="pk">
+                <span class="input-group-btn">
+                    <button class="btn hash-button">hash</button>
+                </span>
+            </div>
         </div>
-        <button id="control_words" onclick="sendControlWords()" class="btn button" style="margin-top: 10px">Отправить</button>
+        <button id="control_words" onclick="sendControlWords()" class="btn button" style="margin-top: 10px">Отправить
+        </button>
     </div>
 </div>
 <!-- inserting these scripts at the end to be able to use all the elements in the DOM -->

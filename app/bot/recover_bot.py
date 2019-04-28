@@ -68,7 +68,7 @@ class RecoverBot:
             session.set_state(States.READY)
             session.set_name(name)
             self._session[uid] = session
-            return "{0}, ты готов восстановить ключ?".format(name)
+            return "Хорошо, Вы готовы восстановить ключ?"
         else:
             return "К сожалению, я не знаю, кто такой {0}. Заведите сначала себе аккаунт.".format(name)
 

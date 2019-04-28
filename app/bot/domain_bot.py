@@ -1,15 +1,14 @@
-import os
+import os, uuid, logging
 from enum import Enum
 
-# from bot.new_person_bot import NewPerson
-# from bot.parser import Parser, ParseTypes
-# from bot.recover_bot import RecoverBot
 from app.bot.new_person_bot import NewPerson
 from app.bot.parser import Parser, ParseTypes
 from app.bot.recover_bot import RecoverBot
+from app.voiceit_verification.voiceit_wrapper import add_new_user as add_new_user_voice_bio, add_voice_snapshot
 
 data_path = os.path.dirname(os.path.abspath(__file__)) + "/data/"
 
+logger = logging.getLogger("DOMAIN_BOT")
 
 class States(Enum):
     INIT = "INIT"
@@ -74,12 +73,29 @@ class DomainBot:
         name = name if name else text
         return name
 
+    # add user without dialog
+    def add_new_user(self, uid, name, words, voice_file_path):
+        try:
+            # create voice snapshot
+            add_new_user_voice_bio(name)
+            add_voice_snapshot(name, voice_file_path)
+            # save new person secret
+            self._new_person.start(uid, name)
+            self._new_person.save(name,words)
+            gen_secret = str(uuid.uuid4())
+            self._new_person.save_secret(name, gen_secret)
+            # send to biometry
+            return gen_secret
+        except Exception as e:
+            logger.error('Error when add new user: '+str(e))
+            return ''
+
     def ready(self, text):
         return self._parser.parse(text, ParseTypes.READY)
 
     def message(self, text, uid, voice_file = None):
         if uid not in self._session:
-            print("NEW MESSAGE FROM UNRECOGNIZED USER {0}".format(uid))
+            logger.debug("NEW MESSAGE FROM UNRECOGNIZED USER {0}".format(uid))
             return self.start(uid)
 
         session = self._session[uid]
@@ -102,7 +118,7 @@ class DomainBot:
         elif state == States.INIT:
             name = self.set_name(text, uid)
             session.set_state(States.PROBLEM)
-            return "Хорошо, {0}! Что у вас случилось?".format(name)
+            return "Хорошо! Что у вас случилось?"
 
         elif state == States.PROBLEM:
             is_name = self._parser.parse(text, ParseTypes.WRONG_NAME)
@@ -144,7 +160,7 @@ class DomainBot:
         if name:
             session.set_state(States.PROBLEM)
 
-            return "Что случилось, {0}?".format(name)
+            return "Что случилось?"
 
         session.set_state(States.INIT)
         return "Уточните, пожалуйста, как Вас зовут."

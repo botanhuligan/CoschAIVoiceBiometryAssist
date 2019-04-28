@@ -45,6 +45,14 @@ body {
     background-color: rgb(204, 120, 50);
 }
 
+.hash-button {
+    color: aliceblue;
+}
+
+.hash-button:hover {
+    color: rgb(232, 191, 106);
+}
+
 .text-to-read {
     color: rgb(255, 255, 255);
     font-size: 20px;
