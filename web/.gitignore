@@ -1,1 +1,3 @@
 .idea
+app/audio/*.mp3
+app/wavs/*.wav
