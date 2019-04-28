@@ -7,13 +7,15 @@ import os
 # from bot.util import clear_text, read_yaml
 from app.bot.parser import ParseTypes, Parser
 from app.bot.util import clear_text, read_yaml
-from app.voiceit_verification.voiceit_wrapper import (
-    verify_user,
-    VerificationStatus
-)
+from app.gmm_verification.gmm_model import VerificationStatus, verify_user
+# from app.voiceit_verification.voiceit_wrapper import (
+#     verify_user,
+#     VerificationStatus
+# )
 
 data_path = os.path.dirname(os.path.abspath(__file__)) + "/data/"
 CHECK_WORDS_AMOUNT = 3
+
 
 class States(Enum):
     INIT = "INIT"

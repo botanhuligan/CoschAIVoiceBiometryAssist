@@ -4,7 +4,8 @@ from enum import Enum
 from app.bot.new_person_bot import NewPerson
 from app.bot.parser import Parser, ParseTypes
 from app.bot.recover_bot import RecoverBot
-from app.voiceit_verification.voiceit_wrapper import add_new_user as add_new_user_voice_bio, add_voice_snapshot
+# from app.voiceit_verification.voiceit_wrapper import add_new_user as add_new_user_voice_bio, add_voice_snapshot
+from app.gmm_verification.gmm_model import add_voice_snapshot
 
 data_path = os.path.dirname(os.path.abspath(__file__)) + "/data/"
 
@@ -77,7 +78,7 @@ class DomainBot:
     def add_new_user(self, uid, name, words, voice_file_path):
         try:
             # create voice snapshot
-            add_new_user_voice_bio(name)
+            # add_new_user_voice_bio(name)
             add_voice_snapshot(name, voice_file_path)
             # save new person secret
             self._new_person.start(uid, name)
