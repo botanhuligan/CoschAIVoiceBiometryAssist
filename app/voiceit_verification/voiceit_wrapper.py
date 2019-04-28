@@ -74,7 +74,7 @@ def add_new_user(user_name: str):
     try:
         user_id = response['userId']
         with open(path + "/users.yaml", "a") as f:
-            f.write("%s: %s" % (user_name, user_id))
+            f.write("%s: %s\n" % (user_name, user_id))
             return response
     except KeyError:
         print("Не удалось создать пользователя")
@@ -101,7 +101,7 @@ def delete_user(user_name: str):
         app.delete_user(to_drop_id)
     with open(path + "/users.yaml", "w") as f:
         for _name, _id in users.items():
-            f.write("%s: %s" % (_name, _id))
+            f.write("%s: %s\n" % (_name, _id))
 
 
 def get_user_id(user_name: str) -> Optional[str]:
