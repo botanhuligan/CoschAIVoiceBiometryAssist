@@ -2,6 +2,7 @@ import uuid, os, logging
 
 from flask import Flask, render_template, request, make_response, \
     Response, send_file, url_for, redirect, jsonify
+
 import traceback
 from app.bot import DomainBot
 from app.stt.recognizer import AudioRecognizer
@@ -120,8 +121,8 @@ def add_user_api_name():
                 name: str = request.args.get('name', default='')
 
         # get or generate uid
-        uid = str(request.cookies.get('userID'))
-        if uid is None:
+        uid = request.cookies.get('userID')
+        if uid is None or uid == 'None':
             uid = str(uuid.uuid4())
             __add_user_as_active(uid)
 
@@ -162,7 +163,7 @@ def add_user_api_words():
         logger.debug("Add words for registration OK: "+str(NEW_USERS[uid]))
 
         response = make_response(('OK', 200))
-        response.headers['Set-Cookie'] = 'userID=' + uid
+        # response.headers['Set-Cookie'] = 'userID=' + uid
         return response
     except Exception as e:
         logger.error('Exception when add words: ' + str(e))
@@ -193,7 +194,7 @@ def add_user_api_voice():
             logger.debug('Wav create ok')
 
         # get or generate uid
-        uid = request.cookies.get('userID')
+        # uid = request.cookies.get('userID')
         if uid is None:
             return Response(status=500, response='No userID in cookie')
 
@@ -203,7 +204,7 @@ def add_user_api_voice():
             return Response(status=500, response='No userID in memory')
 
         # send to recognition
-        recognition_result = __recognize(file_name)
+        recognition_result = __recognize(input_wav_path)
 
         if recognition_result:
             # save user and push message to voice bot
@@ -217,13 +218,13 @@ def add_user_api_voice():
         voice_file = __save_response_and_get_voice(uid, '', 'Повторите, Вас плохо слышно',
                                                    'Повторите, Вас плохо слышно')
         response = make_response(send_file(voice_file, as_attachment=True))
-        response.headers['userID'] = uid
+        # response.headers['userID'] = uid
         return response
 
     except Exception as e:
         logger.error('Exception in add_user voice_verification: ' + str(e))
         return Response(status=500, response='Exception in voice handler: ' + str(e))
-### CREATE USER API END ###
+### CREATE USER API END ###-
 
 
 ### RESTORE SESSION API ####
