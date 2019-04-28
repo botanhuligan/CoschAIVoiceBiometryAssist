@@ -1,4 +1,5 @@
 import enum
+import logging
 from typing import Optional
 
 import numpy as np
@@ -13,6 +14,7 @@ import pickle
 
 path = os.path.dirname(os.path.abspath(__file__))
 
+logger = logging.getLogger("GMM_MODEL")
 
 class VerificationStatus(enum.Enum):
     SUCC = 1,
@@ -76,13 +78,15 @@ def identify_user(file: str) -> Optional[str]:
     """
     fs, signal = wav.read(file)
     features = extract_features(signal, 1600)
-    models = os.listdir("models")
+    models = os.listdir(path + "/models")
     scores = {}
     for model_name in models:
         try:
             user_name, _ = model_name.split(".")
-            model = pickle.load(open("models/" + model_name, "rb"))
+            model = pickle.load(open(path + "/models/" + model_name, "rb"))
             scores[user_name] = model.score(features)
+            logger.debug('userName: ' + str(user_name))
+            logger.debug('scores: ' + str(scores[user_name]))
         except FileNotFoundError:
             print("No file found")
     if len(scores) == 0:

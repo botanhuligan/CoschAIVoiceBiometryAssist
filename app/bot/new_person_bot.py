@@ -2,7 +2,7 @@ import os
 from enum import Enum
 import yaml
 # from bot.parser import Parser, ParseTypes
-# from bot.util import clear_text, read_yaml
+from app.bot.util import read_yaml
 from app.bot.parser import Parser, ParseTypes
 from app.bot.util import clear_text
 
@@ -104,7 +104,7 @@ class NewPerson:
 
         try:
             with open(self._person_path, 'w') as stream:
-                yaml.safe_dump(person, stream)
+                yaml.safe_dump(person, stream, allow_unicode=True)
         except yaml.YAMLError as exc:
             print(exc)
             return None
@@ -118,7 +118,7 @@ class NewPerson:
 
         try:
             with open(self._secret_path, 'w') as stream:
-                yaml.safe_dump(person, stream)
+                yaml.safe_dump(person, stream, allow_unicode=True)
         except yaml.YAMLError as exc:
             print(exc)
             return None

@@ -1,3 +1,4 @@
+import re
 import uuid, os, logging
 
 from flask import Flask, render_template, request, make_response, \
@@ -58,9 +59,18 @@ def __recognize(file_name: str) -> str:
 
 # return path of new voice
 def __get_voice(text:str) -> str:
-    file_name = str(text).lower().strip() + '.mp3'
-    # file_name = file_name.replace('.', '')
+    prefix = str(text).lower().strip()
+    # if too long, not save
+    if len(prefix) > 100:
+        prefix = prefix[:100]
+        file_name = prefix + '.mp3'
+        file_path = THIS_FILE_PATH + '/audio/' + file_name
+        make_speak(text, file_path)
+        return file_path
+
+    file_name = prefix + '.mp3'
     file_path = THIS_FILE_PATH + '/audio/' + file_name
+
     exists = os.path.isfile(file_path)
     if exists:
         logger.debug('Voice already exist')
@@ -248,7 +258,7 @@ def handle_start():
 def handle_get_text():
     uid = request.cookies.get('userID')
     if uid is None:
-        return redirect(url_for('start'))
+        return redirect(url_for('back/start'))
     text_response = __get_wait_responce(uid)
     return jsonify(text_response)
 
@@ -287,7 +297,8 @@ def handle_voice():
         if recognition_result:
             # push message to voice bot
             answer = bot.message(recognition_result, uid, input_wav_path)
-            voice_file = __save_response_and_get_voice(uid, recognition_result, answer, answer)
+            text_to_say = re.sub('\[.*\]', '', answer)
+            voice_file = __save_response_and_get_voice(uid, recognition_result, text_to_say, answer)
         else:
             voice_file = __save_response_and_get_voice(uid, '', 'Повторите, Вас плохо слышно', 'Повторите, Вас плохо слышно')
 
