@@ -46,7 +46,7 @@ def __recognize(file_name: str) -> str:
     # use the audio file as the audio source
     try:
         recognizer = AudioRecognizer()
-        audio = recognizer.get_audio(THIS_FILE_PATH + '/wavs/'+file_name)
+        audio = recognizer.get_audio(file_name)
         logger.debug('Найден файл: '+str(type(audio)))
         text = recognizer.recognize_google(audio)
         logger.debug('Текст распознан:' + text)
@@ -56,7 +56,8 @@ def __recognize(file_name: str) -> str:
         return None
 
 def __get_voice(text:str) -> str:
-    file_name = str(text).lower().strip() + '.wav'
+    file_name = str(text).lower().strip() + '.mp3'
+    # file_name = file_name.replace('.', '')
     file_path = THIS_FILE_PATH + '/audio/' + file_name
     exists = os.path.isfile(file_path)
     if exists:
@@ -199,7 +200,7 @@ def handle_start():
 
 @app.route("/get_text", methods=["GET"])
 def handle_get_text():
-    uid = str(request.cookies.get('userID'))
+    uid = request.cookies.get('userID')
     if uid is None:
         return redirect(url_for('start'))
     text_response = __get_wait_responce(uid)
@@ -211,11 +212,11 @@ def handle_voice():
     logger.debug('Try handle_voice')
     try:
         # get or generate uid
-        uid = str(request.cookies.get('userID'))
-        if uid is None:
-            logger.debug('Uid is None. Redirect to /start')
-            return redirect(url_for('start'))
-
+        uid = request.cookies.get('userID')
+        # if uid is None:
+        #     logger.debug('Uid is None. Redirect to /start')
+        #     return redirect(url_for('start'))
+        uid = str(uid)
         # save wav file
         file_name = str(uuid.uuid4())+'.wav'
         try:
@@ -243,8 +244,9 @@ def handle_voice():
         else:
             voice_file = __save_response_and_get_voice(uid, '', 'Повторите, Вас плохо слышно', 'Повторите, Вас плохо слышно')
 
-        send_file(voice_file)
-        return recognition_result
+        response = make_response(send_file(voice_file, as_attachment=True))
+        response.headers['userID'] = uid
+        return response
 
     except Exception as e:
         logger.error('Exception in voice answer: '+ str(e))
