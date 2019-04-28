@@ -77,7 +77,11 @@ class DomainBot:
 
     def set_name(self, text, uid):
         session = self._session[uid]
-        name = self._parser.parse(text, ParseTypes.NAME)
+        extracted_name = self._parser.extract_name(text)
+        if extracted_name:
+            name = extracted_name
+        else:
+            name = self._parser.parse(text, ParseTypes.NAME)
         session.set_name(name if name else text)
         name = name if name else text
         return name
@@ -90,7 +94,7 @@ class DomainBot:
             add_voice_snapshot(name, voice_file_path)
             # save new person secret
             self._new_person.start(uid, name)
-            self._new_person.save(name,words)
+            self._new_person.save(name, words)
             gen_secret = str(uuid.uuid4())
             self._new_person.save_secret(name, gen_secret)
             # send to biometry
@@ -128,7 +132,8 @@ class DomainBot:
                 return "Хорошо."
 
         elif state == States.INIT:
-            name = self.set_name(text, uid)
+            set_name = self.set_name(text, uid)
+            name = set_name
             session.set_state(States.PROBLEM)
             return random_from_list(["Что случилось?", 'Чем я могу помочь?'])
 

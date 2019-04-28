@@ -2,6 +2,9 @@ import re
 from enum import Enum
 # from bot.util import read_yaml
 from app.bot.util import read_yaml
+from pymorphy2 import MorphAnalyzer
+
+morph = MorphAnalyzer()
 
 
 class ParseTypes(Enum):
@@ -35,3 +38,20 @@ class Parser:
             return self._parse(text, parse_type)
 
         return None
+
+    @staticmethod
+    def extract_name(text):
+        name, surname, patr = None, None, None
+        words = [w for w in re.split("\W", text) if w]
+        for w in words:
+            tag = morph.parse(w)[0].tag
+            if "Name" in tag:
+                name = w
+            elif "Surn" in tag:
+                surname = w
+
+        if not name and not surname:
+            return None
+        return "%s %s" % (surname, name)
+
+
