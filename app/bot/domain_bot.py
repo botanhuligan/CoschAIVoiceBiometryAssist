@@ -16,6 +16,8 @@ TRUE_NEXT_STATE = None
 
 class States(Enum):
     INIT = "INIT"
+    SAY_NAME = "SAY_NAME"
+
     PROBLEM = "PROBLEM"
     IS_NEW = "IS_NEW"
     DONE = "DONE"
@@ -66,10 +68,10 @@ class DomainBot:
 
     def start(self, uid):
         session = Session()
-        session.set_state(States.INIT)
+        session.set_state(States.SAY_NAME)
         self._session[uid] = session
-        return random_from_list(["Здравствуйте!", 'Привет'])+ "Здесь я могу вернуть Ваш секрет, " \
-               "если Вы пройдете голосовую и диалоговую биометрию." + \
+        return random_from_list(["Здравствуйте! ", 'Привет! '])+ "Здесь я могу вернуть Ваш секрет, " \
+               "если Вы пройдете голосовую и диалоговую биометрию. " + \
                random_from_list(["Назовите имя и фамилия?", 'Скажите Ваше имя и фaмилию'])
 
     def _set_state(self, uid, state):
@@ -131,11 +133,15 @@ class DomainBot:
                 session.set_state(States.DONE)
                 return "Хорошо."
 
-        elif state == States.INIT:
+        elif state == States.SAY_NAME:
             set_name = self.set_name(text, uid)
-            name = set_name
+            TRUE_NEXT_STATE = States.INIT
+            session.set_state(States.BOLTALKA)
+            return random_from_list(["Окей, "+set_name+". Я Кощей - хранитель ключей. Давай поболтаем"])
+
+        elif state == States.INIT:
             session.set_state(States.PROBLEM)
-            return random_from_list(["Что случилось?", 'Чем я могу помочь?'])
+            return random_from_list(["Что ты хочешь?", 'Чем я могу помочь?'])
 
         elif state == States.PROBLEM:
             is_name = self._parser.parse(text, ParseTypes.WRONG_NAME)
@@ -154,20 +160,6 @@ class DomainBot:
             # session.set_state(States.IS_NEW)
             # return "Вы хотите завести нового пользователя?"
 
-        # elif state == States.IS_NEW:
-        #     approve = self._parser.parse(text, ParseTypes.APPROVE)
-        #     if approve:
-        #         session.set_state(States.NEW_PERSON)
-        #         return self._new_person.start(uid, session.get_name())
-        #
-        # elif state == States.NEW_PERSON:
-        #     result = self._new_person.message(text, uid)
-        #     if result:
-        #         return result
-        #     else:
-        #         session.set_state(States.DONE)
-        #         return "Я рад, что смог Вам помочь!"
-
         elif state == States.RECOVER_KEY:
             result = self._recover_bot.message(text, uid, voice_file)
             if result:
@@ -177,11 +169,6 @@ class DomainBot:
                 return random_from_list(["Желаю удачи в восстановлении!", 'Всега рада помочь']) +\
                        ". Для расшифрования вашего секрета перейдите на страницу http://0.0.0.0:8081/pages/smart-get.html"
 
-        name = session.get_name()
-        if name:
-            session.set_state(States.PROBLEM)
-
-            return "Что случилось?"
 
             session.set_state(States.INIT)
             return random_from_list(["Я вас не поняла!", 'Пожалуйста, повторите'])
@@ -192,14 +179,15 @@ class DomainBot:
             return random_from_list(["Давай вечером сходим в бар?",
                                      'Какие автомобили ты любишь?',
                                      'Какие планы на выходные?',
-                                     'Ты любишь собак или кошек?']
+                                     'Ты любишь собак или кошек?',
+                                     'Как настроение?']
                                     )
         elif state == States.END_BOLTALKA:
             session.set_state(TRUE_NEXT_STATE)
-            return random_from_list(["Ура",
-                                     'Это хорошо!',
-                                     'А мы похожи',
-                                     'Я запомнил']
+            return random_from_list(["Ура! Ближе к делу",
+                                     'Это хорошо! Давай к делу',
+                                     'А мы похожи. Давай по делу',
+                                     'Я запомнил. Итак, ближе к делу']
                                     )
 
 

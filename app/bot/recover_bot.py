@@ -72,7 +72,9 @@ class RecoverBot:
             self._session[uid] = session
             return "Хорошо, Вы готовы восстановить ключ?"
         else:
-            return "К сожалению, я не знаю, кто такой {0}. Заведите сначала себе аккаунт.".format(name)
+            return "Я не знаю, кто ты такой, {0}. Заведите себе аккаунт " \
+                   "по адресу http://0.0.0.0:8081/pages/registration.html" \
+                   " или назовите имя ещё раз".format(name)
 
     def _set_state(self, uid, state):
         self._session[uid].set_state(state)
